@@ -55,12 +55,27 @@ fn round1(x : Double) -> Double {
 ///|
 fn format_pct1(pct : Double) -> String {
   let r = round1(pct)
-  let sign = if r > 0.0 { "+" } else { "" }
   let tenths = (r.abs() * 10.0).round().to_int()
   let whole = tenths / 10
   let frac = tenths % 10
-  let neg = if r < 0.0 && tenths > 0 { "-" } else { sign }
+  let neg = if r < 0.0 && tenths > 0 { "-" } else { "" }
   "\{neg}\{whole}.\{frac}%"
+}
+
+///|
+fn format_signed_pct1(pct : Double) -> String {
+  let r = round1(pct)
+  let tenths = (r.abs() * 10.0).round().to_int()
+  let whole = tenths / 10
+  let frac = tenths % 10
+  let sign = if r > 0.0 && tenths > 0 {
+    "+"
+  } else if r < 0.0 && tenths > 0 {
+    "-"
+  } else {
+    ""
+  }
+  "\{sign}\{whole}.\{frac}%"
 }
 
 ///|
@@ -192,8 +207,8 @@ pub fn analyze(
     None => "comma"
   }
   let cov_str = format_pct1(audit.tabular_coverage_pct)
-  let delta_c_str = format_pct1(delta_compact)
-  let delta_p_str = format_pct1(delta_pretty)
+  let delta_c_str = format_signed_pct1(delta_compact)
+  let delta_p_str = format_signed_pct1(delta_pretty)
 
   let saved_tokens = compact_m.estimated_tokens - best_toon.estimated_tokens
   let (verdict, reason) = if delta_compact > 2.0 {
@@ -283,7 +298,7 @@ pub fn CostReport::render_report(self : CostReport) -> String {
     let bar = render_bar(r.estimated_tokens, max_tokens, 20)
     let mark = if r.name == self.best_toon.name { "*" } else { " " }
     let label = pad_right("\{mark} \{r.name}", 17)
-    let delta = format_pct1(r.delta_vs_compact_pct)
+    let delta = format_signed_pct1(r.delta_vs_compact_pct)
     sb.write_string(
       "\{label} \{bar}  ~\{r.estimated_tokens} tok (\{r.utf8_bytes} B, \{r.structural_bytes} syntax B, \{delta} vs compact)\n",
     )
