@@ -1,0 +1,8 @@
+import {
+  "waysyou/toon4/types",
+  "waysyou/toon4/lex",
+}
+
+import {
+  "moonbitlang/core/test",
+} for "test"

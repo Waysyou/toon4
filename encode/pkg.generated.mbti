@@ -1,0 +1,38 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "waysyou/toon4/encode"
+
+import {
+  "moonbitlang/core/json",
+  "waysyou/toon4/types",
+}
+
+// Values
+pub fn collect_row_leaves(Map[String, @json.Json], Array[@types.FieldNode], Array[@json.Json]) -> Unit
+
+pub fn encode(@json.Json, options? : @types.EncodeOptions) -> String raise @types.EncodeError
+
+pub fn encode_key(String, path? : String?) -> String raise @types.EncodeError
+
+pub fn encode_lines(@json.Json, options? : @types.EncodeOptions) -> Array[String] raise @types.EncodeError
+
+pub fn encode_string_literal(String, @types.Delimiter, is_root? : Bool, path? : String?) -> String raise @types.EncodeError
+
+pub fn encode_to_lines(@json.Json, (String) -> Unit, options? : @types.EncodeOptions) -> Unit raise @types.EncodeError
+
+pub fn extract_keyed_tabular_fields(Map[String, @json.Json]) -> Array[@types.FieldNode]?
+
+pub fn extract_tabular_fields(Array[@json.Json]) -> Array[@types.FieldNode]?
+
+pub fn format_field_segment(Array[@types.FieldNode], @types.Delimiter) -> String raise @types.EncodeError
+
+pub fn format_header(Int32, key? : String?, fields? : Array[@types.FieldNode]?, delimiter? : @types.Delimiter, keyed? : Bool) -> String raise @types.EncodeError
+
+pub fn format_number(Double, repr? : String?) -> String
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
