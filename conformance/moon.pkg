@@ -1,15 +1,16 @@
-#cfg(any(target="native", target="wasm"))
 import {
   "waysyou/toon4/types",
   "waysyou/toon4/encode",
   "waysyou/toon4/decode",
-  "moonbitlang/core/json",
-  "moonbitlang/core/async",
-  "moonbitlang/core/async/fs",
   "moonbitlang/core/test",
 } for "test"
 
-supported_targets = "native+wasm"
+#cfg(any(target="native", target="wasm"))
+import {
+  "moonbitlang/core/json",
+  "moonbitlang/core/async",
+  "moonbitlang/core/async/fs",
+} for "test"
 
 options(
   "allow-experimental-packages": true,
