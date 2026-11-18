@@ -1,0 +1,50 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "waysyou/toon4/decode"
+
+import {
+  "moonbitlang/core/bigint",
+  "moonbitlang/core/json",
+  "waysyou/toon4/lex",
+  "waysyou/toon4/types",
+}
+
+// Values
+pub fn assert_expected_count(Int32, @bigint.BigInt, String, @lex.ParsedLine, kind? : @types.ErrorKind, col_offset? : Int32, utf16_length? : Int32) -> Unit raise @types.DecodeError
+
+pub fn build_value_from_stream(((@types.StreamEvent) -> Unit raise @types.DecodeError) -> Unit raise @types.DecodeError) -> @json.Json raise @types.DecodeError
+
+pub fn decode(String, options? : @types.DecodeOptions) -> @json.Json raise @types.DecodeError
+
+pub fn decode_bytes(BytesView, options? : @types.DecodeOptions) -> @json.Json raise @types.DecodeError
+
+pub fn decode_stream(String, (@types.StreamEvent) -> Unit raise @types.DecodeError, options? : @types.DecodeOptions) -> Unit raise @types.DecodeError
+
+pub fn decode_stream_lines(() -> String?, (@types.StreamEvent) -> Unit raise @types.DecodeError, options? : @types.DecodeOptions) -> Unit raise @types.DecodeError
+
+pub fn is_data_row(StringView, @types.Delimiter) -> Bool
+
+pub fn validate_no_blank_lines_in_range(Int32?, Int32?, Array[@lex.BlankLineInfo], String) -> Unit raise @types.DecodeError
+
+pub fn validate_no_extra_list_items(@lex.ParsedLine?, Int32, @bigint.BigInt) -> Unit raise @types.DecodeError
+
+pub fn validate_no_extra_tabular_rows(@lex.ParsedLine?, Int32, @types.ArrayHeader) -> Unit raise @types.DecodeError
+
+// Errors
+
+// Types and methods
+pub struct LineReader {
+  mut lookahead : @lex.ParsedLine?
+  mut done : Bool
+  mut last_line : @lex.ParsedLine?
+  scan_state : @lex.ScanState
+  indent_size : Int32
+  strict : Bool
+  // private fields
+}
+pub fn LineReader::new(() -> String?, indent_size? : Int32, strict? : Bool) -> Self
+pub fn LineReader::peek(Self) -> @lex.ParsedLine? raise @types.DecodeError
+pub fn LineReader::read(Self) -> @lex.ParsedLine? raise @types.DecodeError
+
+// Type aliases
+
+// Traits
