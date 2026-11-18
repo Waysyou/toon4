@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install MoonBit toolchain
+        run: |
+          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
+          echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
+
+      - name: Show MoonBit version
+        run: moon version --all
+
+      - name: Check formatting and interface files
+        run: |
+          moon fmt --check
+          moon check --deny-warn --target all
+
+      - name: Run tests across wasm, wasm-gc, js, and native
+        run: |
+          moon test --target wasm
+          moon test --target wasm-gc
+          moon test --target js
+          moon test --target native
+
+      - name: Run inventory_agent example and CLI smoke check
+        run: |
+          moon run examples/inventory_agent --target native
+          moon run --target native cmd/toon4 -- analyze conformance/fixtures/encode/objects-keyed.json
