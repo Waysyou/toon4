@@ -1,0 +1,74 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "waysyou/toon4"
+
+import {
+  "moonbitlang/core/json",
+  "waysyou/toon4/advisor",
+  "waysyou/toon4/types",
+}
+
+// Values
+pub fn analyze(@json.Json, indent_size? : Int32) -> @advisor.CostReport raise @types.EncodeError
+
+pub fn decode(String, options? : @types.DecodeOptions) -> @json.Json raise @types.DecodeError
+
+pub fn decode_bytes(BytesView, options? : @types.DecodeOptions) -> @json.Json raise @types.DecodeError
+
+pub fn decode_stream(String, (@types.StreamEvent) -> Unit raise @types.DecodeError, options? : @types.DecodeOptions) -> Unit raise @types.DecodeError
+
+pub fn decode_stream_lines(() -> String?, (@types.StreamEvent) -> Unit raise @types.DecodeError, options? : @types.DecodeOptions) -> Unit raise @types.DecodeError
+
+pub fn encode(@json.Json, options? : @types.EncodeOptions) -> String raise @types.EncodeError
+
+pub fn encode_lines(@json.Json, options? : @types.EncodeOptions) -> Array[String] raise @types.EncodeError
+
+pub fn encode_to_lines(@json.Json, (String) -> Unit, options? : @types.EncodeOptions) -> Unit raise @types.EncodeError
+
+pub fn format_decode_error(@types.DecodeError) -> String
+
+pub fn format_encode_error(@types.EncodeError) -> String
+
+pub fn measure_text(String) -> @advisor.TextMetrics
+
+pub fn spec_version() -> String
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+pub using @types {type ArrayHeader}
+
+pub using @advisor {type CostReport}
+
+pub using @types {type DecodeError}
+
+pub using @types {type DecodeOptions}
+
+pub using @types {type Delimiter}
+
+pub using @types {type EncodeError}
+
+pub using @types {type EncodeOptions}
+
+pub using @types {type ErrorKind}
+
+pub using @advisor {type FallbackFinding}
+
+pub using @advisor {type FallbackReason}
+
+pub using @types {type FieldNode}
+
+pub using @advisor {type FormatStats}
+
+pub using @types {type Span}
+
+pub using @types {type StreamEvent}
+
+pub using @advisor {type StructuralAudit}
+
+pub using @advisor {type TextMetrics}
+
+pub using @advisor {type VerdictKind}
+
+// Traits

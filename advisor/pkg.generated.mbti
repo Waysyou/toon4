@@ -1,0 +1,93 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "waysyou/toon4/advisor"
+
+import {
+  "moonbitlang/core/debug",
+  "moonbitlang/core/json",
+  "waysyou/toon4/types",
+}
+
+// Values
+pub fn analyze(@json.Json, indent_size? : Int32) -> CostReport raise @types.EncodeError
+
+pub fn audit_structure(@json.Json) -> StructuralAudit
+
+pub fn measure_text(String) -> TextMetrics
+
+// Errors
+
+// Types and methods
+#derive(Eq, @debug.Debug)
+pub(all) struct CostReport {
+  pretty_json : FormatStats
+  compact_json : FormatStats
+  toon_comma : FormatStats
+  toon_tab : FormatStats
+  toon_pipe : FormatStats
+  best_toon : FormatStats
+  audit : StructuralAudit
+  verdict : VerdictKind
+  reason : String
+}
+pub fn CostReport::render_report(Self) -> String
+pub fn CostReport::to_json(Self) -> @json.Json
+
+#derive(Eq, @debug.Debug)
+pub(all) struct FallbackFinding {
+  path : String
+  reason : FallbackReason
+  item_count : Int32
+  explanation : String
+}
+
+#derive(Eq, @debug.Debug)
+pub(all) enum FallbackReason {
+  NonUniformObjectKeys(String)
+  NonPrimitiveColumn(String)
+  SingleEntryKeyedObject
+  MixedElementTypes
+  EmptyCollection
+}
+
+#derive(Eq, @debug.Debug)
+pub(all) struct FormatStats {
+  name : String
+  delimiter : @types.Delimiter?
+  text : String
+  utf8_bytes : Int32
+  chars : Int32
+  structural_bytes : Int32
+  estimated_tokens : Int32
+  delta_vs_compact_pct : Double
+  delta_vs_pretty_pct : Double
+}
+
+#derive(Eq, @debug.Debug)
+pub(all) struct StructuralAudit {
+  tabular_items : Int32
+  non_tabular_items : Int32
+  array_tabular_blocks : Int32
+  keyed_tabular_blocks : Int32
+  tabular_coverage_pct : Double
+  fallbacks : Array[FallbackFinding]
+}
+
+#derive(Eq, @debug.Debug)
+pub(all) struct TextMetrics {
+  utf8_bytes : Int32
+  chars : Int32
+  structural_bytes : Int32
+  estimated_tokens : Int32
+}
+
+#derive(Eq, @debug.Debug)
+pub(all) enum VerdictKind {
+  RecommendToon
+  Marginal
+  KeepCompactJson
+}
+pub fn VerdictKind::label(Self) -> String
+
+// Type aliases
+
+// Traits

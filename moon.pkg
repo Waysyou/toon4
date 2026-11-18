@@ -1,3 +1,10 @@
 import {
+  "waysyou/toon4/types",
+  "waysyou/toon4/encode",
+  "waysyou/toon4/decode",
+  "waysyou/toon4/advisor",
+}
+
+import {
   "moonbitlang/core/test",
 } for "test"
