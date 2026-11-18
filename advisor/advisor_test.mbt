@@ -113,3 +113,36 @@ test "advisor flags tiny payload as Marginal due to prompt-tax threshold" {
   guard json_summary is Object(m) else { @test.fail("expected json object") }
   @test.assert_eq(m.get("verdict"), Some(Json::string("MARGINAL")))
 }
+
+///|
+test "advisor excludes anonymous list items from tabular coverage" {
+  let nested_array : Json = [[{ "x": 1 }, { "x": 2 }]]
+  let array_report = @advisor.analyze(nested_array)
+  @test.assert_eq(array_report.audit.array_tabular_blocks, 0)
+  @test.assert_eq(array_report.audit.tabular_coverage_pct, 0.0)
+  assert_true(array_report.best_toon.text.contains("- [2]:"))
+  assert_true(!array_report.best_toon.text.contains("{x}"))
+  assert_true(
+    array_report.audit.fallbacks.any(finding => {
+      finding.path == "$[0]" && finding.reason is ListItemPosition
+    }),
+  )
+
+  let nested_object : Json = {
+    "items": [{ "a": { "v": 1 }, "b": { "v": 2 } }, 0],
+  }
+  let object_report = @advisor.analyze(nested_object)
+  @test.assert_eq(object_report.audit.keyed_tabular_blocks, 0)
+  @test.assert_eq(object_report.audit.tabular_coverage_pct, 0.0)
+  assert_true(!object_report.best_toon.text.contains("[2:]"))
+  assert_true(
+    object_report.audit.fallbacks.any(finding => {
+      finding.path == "items[0]" && finding.reason is ListItemPosition
+    }),
+  )
+
+  let named_field : Json = [{ "rows": [{ "x": 1 }, { "x": 2 }] }, 0]
+  let named_report = @advisor.analyze(named_field)
+  @test.assert_eq(named_report.audit.array_tabular_blocks, 1)
+  assert_true(named_report.best_toon.text.contains("- rows[2]{x}:"))
+}

@@ -9,6 +9,8 @@ import {
 }
 
 // Values
+pub fn canonical_number_repr(StringView) -> String?
+
 pub fn check_no_unpaired_surrogates(StringView, path? : String?) -> Unit raise @types.EncodeError
 
 pub fn ends_with_ascii_whitespace(StringView) -> Bool

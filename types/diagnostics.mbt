@@ -27,6 +27,7 @@ pub(all) enum ErrorKind {
   MalformedHeader
   HeaderDelimiterMismatch
   UnexpectedContent
+  NumberOutOfRange
   MissingColon
   UnterminatedString
   InvalidEscape
@@ -52,6 +53,7 @@ pub fn ErrorKind::code(self : ErrorKind) -> String {
     MalformedHeader => "E_HEADER"
     HeaderDelimiterMismatch => "E_HEADER_DELIM"
     UnexpectedContent => "E_UNEXPECTED"
+    NumberOutOfRange => "E_NUMBER"
     MissingColon => "E_COLON"
     UnterminatedString => "E_STRING"
     InvalidEscape => "E_ESCAPE"

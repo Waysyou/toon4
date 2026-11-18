@@ -34,7 +34,9 @@ fn json_semantically_equal(a : Json, b : Json) -> Bool {
     (Null, Null) => true
     (True, True) => true
     (False, False) => true
-    (Number(x, ..), Number(y, ..)) => (x == 0.0 && y == 0.0) || x == y
+    (Number(x, repr=x_repr), Number(y, repr=y_repr)) =>
+      @encode.format_number(x, repr=x_repr) ==
+      @encode.format_number(y, repr=y_repr)
     (String(x), String(y)) => x == y
     (Array(xs), Array(ys)) => {
       if xs.length() != ys.length() {
@@ -163,7 +165,7 @@ async test "official TOON v4.4 decode fixtures (404 cases)" {
     }
     file_count += 1
     let text = @fs.read_text("\{dir}/\{file}")
-    let doc = @json.parse(text)
+    let doc = @json.parse(text, preserve_number_repr=true)
     guard doc is Object(root) else { fail("expected object in \{file}") }
     guard root.get("tests") is Some(Array(tests)) else {
       fail("missing tests array in \{file}")

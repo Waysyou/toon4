@@ -85,3 +85,41 @@ test "CLI execution handles TOON 4.4 round-trip, check diagnostics, and analyze"
   @test.assert_eq(ana_res.exit_code, 0)
   assert_true(ana_res.stdout.contains("\"verdict\""))
 }
+
+///|
+test "CLI round-trip preserves precise JSON numbers and rejects overflow" {
+  guard @cli.parse_cli_args(["encode", "-"]) is Action(encode_action) &&
+    @cli.parse_cli_args(["decode", "-"]) is Action(decode_action) else {
+    @test.fail("expected encode and decode actions")
+  }
+  let json = b"[9007199254740993,-9007199254740993,9007199254740993.0,1.234567890123456789,1000000000000000000001,1e-325,-0.00e+2]"
+  let encoded = @cli.run_action_on_bytes(encode_action, json[:])
+  @test.assert_eq(encoded.exit_code, 0)
+  @test.assert_eq(
+    encoded.stdout.trim().to_owned(),
+    "[7]: 9007199254740993,-9007199254740993,9007199254740993,1.234567890123456789,1.000000000000000000001e+21,1e-325,0",
+  )
+  let decoded = @cli.run_action_on_bytes(
+    decode_action,
+    @utf8.encode(encoded.stdout)[:],
+  )
+  @test.assert_eq(decoded.exit_code, 0)
+  @test.assert_eq(
+    decoded.stdout
+    .split("\n")
+    .to_array()
+    .map(line => line.trim().to_owned())
+    .join(""),
+    "[9007199254740993,-9007199254740993,9007199254740993,1.234567890123456789,1.000000000000000000001e+21,1e-325,0]",
+  )
+
+  let overflow = b"1e309"
+  let encode_error = @cli.run_action_on_bytes(encode_action, overflow[:])
+  @test.assert_eq(encode_error.exit_code, 1)
+  assert_true(
+    encode_error.stderr.contains("outside the supported floating-point range"),
+  )
+  let decode_error = @cli.run_action_on_bytes(decode_action, overflow[:])
+  @test.assert_eq(decode_error.exit_code, 1)
+  assert_true(decode_error.stderr.contains("DecodeError[E_NUMBER]"))
+}

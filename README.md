@@ -114,6 +114,9 @@ Measured directly with `moon bench -p waysyou/toon4/benchmarks` (`moonc v0.10.21
 - `conformance`, `benchmarks`, `examples/inventory_agent`: Official 564-case spec runner, differential diagnostics, `@bench.T` suite, and warehouse agent walkthrough.
 
 ### Explicit Scope Boundaries & Design Trade-offs
+
+**Numeric precision (§2 and §4).** The CLI preserves source number text through JSON → TOON → JSON and normalizes its decimal spelling without rounding digits. The decoder stores that text in `Json::Number.repr`; reading just its host `Double` value can still round or underflow. JSON or TOON literals that overflow the supported finite `Double` range fail with a diagnostic. For library JSON input, parse with `preserve_number_repr=true` to retain the original digits.
+
 1. **Offline BPE-Aware Token Estimator**: `advisor` uses a deterministic, zero-dependency BPE-style heuristic (modeling `o200k`/`cl100k` 3-digit chunking, identifier splitting, JSON punctuation clusters, and newline+indent merging) rather than embedding multi-megabyte external `.tiktoken` BPE tables. UTF-8 byte counts, syntax byte counts, and tabular coverage percentages are exact; token counts are labeled `estimated_tokens` and may vary slightly across specific model tokenizers.
 2. **TOON v4.0+ Literal Dotted Keys**: Per `toon-format/spec` v4.0–v4.4, `keyFolding` / `expandPaths` are intentionally absent; dotted keys like `a.b` are unconditionally treated as literal keys.
 3. **Target Compatibility**: All core packages (`types`, `lex`, `encode`, `decode`, `advisor`, `cli`, root `toon4`, `examples/inventory_agent`, `benchmarks`) compile and pass on **all 4 backends** (`wasm`, `wasm-gc`, `js`, `native`). File-system I/O packages (`cmd/toon4` and `conformance/spec_conformance_test.mbt`) use `moonbitlang/core/async/fs` and target `native` + `wasm`.

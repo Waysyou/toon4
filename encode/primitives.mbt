@@ -1,55 +1,16 @@
 ///|
-fn is_canonical_decimal_int(r : String, is_negative : Bool) -> Bool {
-  let len = r.length()
-  if len == 0 {
-    return false
-  }
-  let mut i = 0
-  if is_negative {
-    if r.unsafe_get(0) != 0x2D {
-      return false
-    }
-    i = 1
-    if i >= len {
-      return false
-    }
-  } else if r.unsafe_get(0) == 0x2D {
-    return false
-  }
-  let first = r.unsafe_get(i)
-  if first < 0x31 || first > 0x39 {
-    return false
-  }
-  for j in (i + 1)..<len {
-    let cu = r.unsafe_get(j)
-    if cu < 0x30 || cu > 0x39 {
-      return false
-    }
-  }
-  true
-}
-
-///|
-/// Formats a JSON number according to TOON §2 and §3:
-/// - `NaN` and `±Infinity` map to `"null"`
-/// - `-0.0` and `0.0` normalize to `"0"`
-/// - Preserves lossless integer `repr` when `|n| >= 2^53` and `repr` is a
-///   canonical decimal integer string matching `n`'s sign.
+/// Formats numbers per TOON §2 and §3. A valid source spelling is retained
+/// in canonical form, since the host Double can lose decimal digits.
 pub fn format_number(n : Double, repr~ : String? = None) -> String {
   if !n.is_finite() {
     return "null"
   }
-  if n == 0.0 {
-    return "0"
-  }
+  let rendered = if n == 0.0 { "0" } else { n.to_string() }
   match repr {
-    Some(r) =>
-      if n.abs() >= 9007199254740992.0 && is_canonical_decimal_int(r, n < 0.0) {
-        return r
-      }
-    None => ()
+    Some(raw) if raw != rendered =>
+      @lex.canonical_number_repr(raw[:]).unwrap_or(rendered)
+    _ => rendered
   }
-  n.to_string()
 }
 
 ///|
@@ -106,7 +67,15 @@ fn encode_primitive(
     Null => "null"
     True => "true"
     False => "false"
-    Number(n, repr~) => format_number(n, repr~)
+    Number(n, repr~) => {
+      if !n.is_finite() && repr is Some(raw) && @lex.is_numeric_literal(raw[:]) {
+        raise @types.EncodeError(
+          message="number is outside the supported floating-point range",
+          path=None,
+        )
+      }
+      format_number(n, repr~)
+    }
     String(s) => encode_string_literal(s, delimiter, is_root~)
     Array(_) | Object(_) =>
       raise @types.EncodeError(

@@ -176,6 +176,71 @@ pub fn is_safe_unquoted(s : StringView, delimiter : @types.Delimiter) -> Bool {
 }
 
 ///|
+/// Formats a JSON numeric spelling as TOON without rounding its decimal digits.
+pub fn canonical_number_repr(input : StringView) -> String? {
+  guard is_numeric_literal(input) else { return None }
+  let negative = input[0] == cu_hyphen
+  let start = if negative { 1 } else { 0 }
+  let length = input.length()
+  let exponent_at = input
+    .find_code_unit(0x65)
+    .unwrap_or(input.find_code_unit(0x45).unwrap_or(length))
+  let mantissa = input[start:exponent_at]
+  let point = mantissa.find_code_unit(0x2E).unwrap_or(mantissa.length())
+  let digits = if point == mantissa.length() {
+    mantissa.to_owned()
+  } else {
+    mantissa[:point].to_owned() + mantissa[point + 1:].to_owned()
+  }
+  let mut first = 0
+  while first < digits.length() && digits[first] == 0x30 {
+    first += 1
+  }
+  if first == digits.length() {
+    return Some("0")
+  }
+  let mut end = digits.length()
+  while digits[end - 1] == 0x30 {
+    end -= 1
+  }
+  let significant = digits[first:end]
+  let mut power = @bigint.BigInt::from_int(point - first - 1)
+  if exponent_at < length {
+    let start = if input[exponent_at + 1] == 0x2B {
+      exponent_at + 2
+    } else {
+      exponent_at + 1
+    }
+    let exponent = @string.parse_bigint(input[start:]) catch {
+      _ => return None
+    }
+    power = power + exponent
+  }
+  let magnitude = if power >= @bigint.BigInt::from_int(-6) &&
+    power < @bigint.BigInt::from_int(21) {
+    let decimal_point = power.to_int() + 1
+    if decimal_point <= 0 {
+      "0." + "0".repeat(-decimal_point) + significant.to_owned()
+    } else if decimal_point >= significant.length() {
+      significant.to_owned() + "0".repeat(decimal_point - significant.length())
+    } else {
+      significant[:decimal_point].to_owned() +
+      "." +
+      significant[decimal_point:].to_owned()
+    }
+  } else {
+    let coefficient = if significant.length() == 1 {
+      significant.to_owned()
+    } else {
+      significant[:1].to_owned() + "." + significant[1:].to_owned()
+    }
+    let sign = if power < @bigint.BigInt::from_int(0) { "" } else { "+" }
+    "\{coefficient}e\{sign}\{power}"
+  }
+  Some(if negative { "-" + magnitude } else { magnitude })
+}
+
+///|
 /// Decodes an unquoted or quoted primitive token per TOON §4.
 pub fn parse_primitive_token(
   token : StringView,
@@ -199,11 +264,24 @@ pub fn parse_primitive_token(
     return Json::null()
   }
   if is_numeric_literal(trimmed) {
-    let parsed = @string.parse_double(trimmed) catch {
-      _ => return Json::string(trimmed.to_owned())
+    let parsed = @json.parse(trimmed, preserve_number_repr=true) catch {
+      _ => Json::null()
     }
-    let normalized = if parsed == 0.0 { 0.0 } else { parsed }
-    return Json::number(normalized)
+    guard parsed is Number(n, ..) && n.is_finite() else {
+      raise @types.DecodeError::new(
+        kind=NumberOutOfRange,
+        message="number is outside the supported floating-point range",
+        span=@types.Span::at(0, col_offset + lead + 1, length=trimmed.length()),
+      )
+    }
+    if n == 0.0 {
+      // The retained spelling distinguishes a true zero from an underflow.
+      if canonical_number_repr(trimmed) == Some("0") {
+        return Json::number(0.0)
+      }
+      return Json::number(0.0, repr=trimmed.to_owned())
+    }
+    return parsed
   }
   Json::string(trimmed.to_owned())
 }

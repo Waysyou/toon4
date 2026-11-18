@@ -46,6 +46,7 @@ pub(all) enum FallbackReason {
   NonPrimitiveColumn(String)
   SingleEntryKeyedObject
   MixedElementTypes
+  ListItemPosition
   EmptyCollection
 }
 

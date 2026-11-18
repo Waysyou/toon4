@@ -74,6 +74,7 @@ pub(all) enum ErrorKind {
   MalformedHeader
   HeaderDelimiterMismatch
   UnexpectedContent
+  NumberOutOfRange
   MissingColon
   UnterminatedString
   InvalidEscape

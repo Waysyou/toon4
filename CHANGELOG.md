@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+- Preserve decimal number text through JSON ⇄ TOON round trips and reject numeric overflow with a diagnostic.
+- Report anonymous list items according to the encoder’s actual layout when counting tabular coverage.
+
 ## 0.1.0 (2026-11-18)
 
 ### Added

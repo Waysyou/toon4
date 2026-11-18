@@ -6,6 +6,7 @@ pub(all) enum FallbackReason {
   NonPrimitiveColumn(String)
   SingleEntryKeyedObject
   MixedElementTypes
+  ListItemPosition
   EmptyCollection
 }
 
@@ -47,6 +48,13 @@ fn child_path(parent : String, key : String) -> String {
     key
   } else {
     "\{parent}.\{key}"
+  }
+}
+
+///|
+fn audit_list_items(arr : Array[Json], path : String, acc : AuditAcc) -> Unit {
+  for idx, item in arr {
+    audit_node(item, "\{path}[\{idx}]", acc, list_item=true)
   }
 }
 
@@ -94,9 +102,7 @@ fn diagnose_array_fallback(
       item_count: arr.length(),
       explanation: "contains non-object, empty-object, or nested-array elements; uses list form ('- ')",
     })
-    for idx, item in arr {
-      audit_node(item, "\{path}[\{idx}]", acc)
-    }
+    audit_list_items(arr, path, acc)
     return
   }
   // All non-empty objects: pinpoint first mismatched key or non-uniform column
@@ -111,9 +117,7 @@ fn diagnose_array_fallback(
           item_count: arr.length(),
           explanation: "element [\{i}] is missing key '\{k}' present in [0]; falls back to list form",
         })
-        for idx, item in arr {
-          audit_node(item, "\{path}[\{idx}]", acc)
-        }
+        audit_list_items(arr, path, acc)
         return
       }
     }
@@ -125,9 +129,7 @@ fn diagnose_array_fallback(
           item_count: arr.length(),
           explanation: "element [\{i}] adds extra key '\{k}' absent in [0]; falls back to list form",
         })
-        for idx, item in arr {
-          audit_node(item, "\{path}[\{idx}]", acc)
-        }
+        audit_list_items(arr, path, acc)
         return
       }
     }
@@ -144,9 +146,7 @@ fn diagnose_array_fallback(
             item_count: arr.length(),
             explanation: "column '\{k}' (first seen at [\{i}]) holds an array, preventing tabular flattening",
           })
-          for idx, elem in arr {
-            audit_node(elem, "\{path}[\{idx}]", acc)
-          }
+          audit_list_items(arr, path, acc)
           return
         }
         _ => ()
@@ -159,9 +159,7 @@ fn diagnose_array_fallback(
     item_count: arr.length(),
     explanation: "a nested object column has non-uniform sub-keys across elements; falls back to list form",
   })
-  for idx, elem in arr {
-    audit_node(elem, "\{path}[\{idx}]", acc)
-  }
+  audit_list_items(arr, path, acc)
 }
 
 ///|
@@ -179,11 +177,26 @@ fn is_leaf_record_object(obj : Map[String, Json]) -> Bool {
 }
 
 ///|
-fn audit_node(value : Json, path : String, acc : AuditAcc) -> Unit {
+fn audit_node(
+  value : Json,
+  path : String,
+  acc : AuditAcc,
+  list_item~ : Bool = false,
+) -> Unit {
   match value {
     Null | True | False | Number(_, ..) | String(_) => ()
     Array(arr) =>
       match @encode.extract_tabular_fields(arr) {
+        Some(_) if list_item => {
+          acc.non_tabular_items += arr.length()
+          acc.fallbacks.push({
+            path,
+            reason: ListItemPosition,
+            item_count: arr.length(),
+            explanation: "an array used as a list item must use list form",
+          })
+          audit_list_items(arr, path, acc)
+        }
         Some(_) => {
           acc.tabular_items += arr.length()
           acc.array_tabular_blocks += 1
@@ -192,12 +205,20 @@ fn audit_node(value : Json, path : String, acc : AuditAcc) -> Unit {
       }
     Object(obj) =>
       match @encode.extract_keyed_tabular_fields(obj) {
-        Some(_) => {
+        Some(_) if !list_item => {
           acc.tabular_items += obj.length()
           acc.keyed_tabular_blocks += 1
         }
-        None => {
-          if obj.length() == 1 {
+        fields => {
+          if fields is Some(_) {
+            acc.non_tabular_items += obj.length()
+            acc.fallbacks.push({
+              path,
+              reason: ListItemPosition,
+              item_count: obj.length(),
+              explanation: "an anonymous list object must write its fields individually",
+            })
+          } else if obj.length() == 1 {
             for _, v in obj {
               if v is Object(sub) && is_leaf_record_object(sub) {
                 acc.non_tabular_items += 1
