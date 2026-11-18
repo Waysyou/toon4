@@ -1,0 +1,99 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "waysyou/toon4/lex"
+
+import {
+  "moonbitlang/core/bigint",
+  "moonbitlang/core/debug",
+  "moonbitlang/core/json",
+  "waysyou/toon4/types",
+}
+
+// Values
+pub fn check_no_unpaired_surrogates(StringView, path? : String?) -> Unit raise @types.EncodeError
+
+pub fn ends_with_ascii_whitespace(StringView) -> Bool
+
+pub fn escape_string(StringView) -> String
+
+pub fn find_closing_quote(StringView, Int32) -> Int32?
+
+pub fn find_matching_brace(StringView, Int32) -> Int32?
+
+pub fn find_unquoted_char(StringView, Char, start? : Int32) -> Int32?
+
+pub fn find_unquoted_mismatched_delimiter(StringView, @types.Delimiter) -> @types.Delimiter?
+
+pub fn is_numeric_like(StringView) -> Bool
+
+pub fn is_numeric_literal(StringView) -> Bool
+
+pub fn is_safe_unquoted(StringView, @types.Delimiter) -> Bool
+
+pub fn is_valid_unquoted_key(StringView) -> Bool
+
+pub fn parse_array_header_line(StringView, @types.Delimiter, line_col_offset? : Int32) -> HeaderParse
+
+pub fn parse_bracket_segment(StringView, @types.Delimiter, col_offset? : Int32) -> (@bigint.BigInt, @types.Delimiter, Bool) raise @types.DecodeError
+
+pub fn parse_field_entries(StringView, @types.Delimiter, col_offset? : Int32) -> Array[@types.FieldNode] raise @types.DecodeError
+
+pub fn parse_key_token(StringView, start? : Int32, col_offset? : Int32) -> (String, Int32) raise @types.DecodeError
+
+pub fn parse_primitive_token(StringView, col_offset? : Int32) -> @json.Json raise @types.DecodeError
+
+pub fn parse_string_literal(StringView, col_offset? : Int32) -> String raise @types.DecodeError
+
+pub fn scan_line_incremental(String, ScanState, Int32, Bool) -> ParsedLine? raise @types.DecodeError
+
+pub fn split_delimited_values(StringView, @types.Delimiter) -> Array[(StringView, Int32)]
+
+pub fn split_lines_raw(String) -> Array[String]
+
+pub fn trim_ascii_whitespace(StringView) -> StringView
+
+pub fn trim_spaces(StringView) -> StringView
+
+pub fn trim_spaces_with_offset(StringView) -> (StringView, Int32)
+
+pub fn trim_trailing_spaces(StringView) -> StringView
+
+pub fn unescape_string(StringView, col_offset? : Int32) -> String raise @types.DecodeError
+
+pub fn utf16_offset_to_column(StringView, Int32) -> Int32
+
+// Errors
+
+// Types and methods
+#derive(Eq, @debug.Debug)
+pub(all) struct BlankLineInfo {
+  line : Int32
+  indent : Int32
+  depth : Int32
+}
+
+#derive(Eq, @debug.Debug)
+pub(all) enum HeaderParse {
+  Header(header~ : @types.ArrayHeader, inline_values~ : String?, inline_offset~ : Int32, strict_error~ : @types.DecodeError?)
+  NotHeader
+  Invalid(@types.DecodeError)
+}
+
+#derive(Eq, @debug.Debug)
+pub(all) struct ParsedLine {
+  raw : String
+  indent : Int32
+  content : String
+  content_offset : Int32
+  depth : Int32
+  line_number : Int32
+}
+
+pub(all) struct ScanState {
+  mut line_number : Int32
+  blank_lines : Array[BlankLineInfo]
+}
+pub fn ScanState::new() -> Self
+
+// Type aliases
+
+// Traits
