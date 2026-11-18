@@ -1,0 +1,10 @@
+import {
+  "waysyou/toon4/types",
+  "waysyou/toon4/lex",
+  "moonbitlang/core/bigint",
+  "moonbitlang/core/encoding/utf8",
+}
+
+import {
+  "moonbitlang/core/test",
+} for "test"
