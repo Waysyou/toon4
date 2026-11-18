@@ -1,0 +1,122 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "waysyou/toon4/types"
+
+import {
+  "moonbitlang/core/bigint",
+  "moonbitlang/core/debug",
+  "moonbitlang/core/json",
+}
+
+// Values
+pub fn count_leaf_fields(Array[FieldNode]) -> Int32
+
+pub fn find_duplicate_field(Array[FieldNode]) -> String?
+
+// Errors
+#derive(Eq, @debug.Debug)
+pub(all) suberror DecodeError {
+  DecodeError(kind~ : ErrorKind, message~ : String, span~ : Span, source_line~ : String?)
+}
+pub fn DecodeError::at_line(Self, Int32, source_line? : String?, col_offset? : Int32) -> Self
+pub fn DecodeError::format(Self) -> String
+pub fn DecodeError::new(kind~ : ErrorKind, message~ : String, span? : Span, source_line? : String?) -> Self
+
+#derive(Eq, @debug.Debug)
+pub(all) suberror EncodeError {
+  EncodeError(message~ : String, path~ : String?)
+}
+pub fn EncodeError::format(Self) -> String
+
+// Types and methods
+#derive(Eq, @debug.Debug)
+pub(all) struct ArrayHeader {
+  key : String?
+  length : @bigint.BigInt
+  delimiter : Delimiter
+  fields : Array[FieldNode]?
+  keyed : Bool
+}
+
+#derive(Eq, @debug.Debug)
+pub(all) struct DecodeOptions {
+  indent_size : Int32
+  strict : Bool
+}
+pub fn DecodeOptions::default() -> Self
+pub fn DecodeOptions::new(indent_size? : Int32, strict? : Bool) -> Self
+pub fn DecodeOptions::validate(Self) -> Unit raise DecodeError
+
+#derive(Eq, @debug.Debug)
+pub(all) enum Delimiter {
+  Comma
+  Tab
+  Pipe
+}
+pub fn Delimiter::from_char(Char) -> Self?
+pub fn Delimiter::header_suffix(Self) -> String
+pub fn Delimiter::label(Self) -> String
+pub fn Delimiter::to_char(Self) -> Char
+
+#derive(Eq, @debug.Debug)
+pub(all) struct EncodeOptions {
+  indent_size : Int32
+  delimiter : Delimiter
+}
+pub fn EncodeOptions::default() -> Self
+pub fn EncodeOptions::new(indent_size? : Int32, delimiter? : Delimiter) -> Self
+pub fn EncodeOptions::validate(Self) -> Unit raise EncodeError
+
+#derive(Eq, @debug.Debug)
+pub(all) enum ErrorKind {
+  InvalidUtf8
+  InvalidIndentation
+  BlankLineInScope
+  MalformedHeader
+  HeaderDelimiterMismatch
+  UnexpectedContent
+  MissingColon
+  UnterminatedString
+  InvalidEscape
+  InvalidSurrogate
+  TrailingCharacters
+  CountMismatch
+  WidthMismatch
+  DuplicateKey
+  DuplicateField
+  DepthJump
+  OverIndentation
+  KeylessHeaderMisuse
+  InvalidOption
+}
+pub fn ErrorKind::code(Self) -> String
+
+#derive(Eq, @debug.Debug)
+pub(all) enum FieldNode {
+  Leaf(String)
+  Group(String, Array[FieldNode])
+}
+pub fn FieldNode::collect_leaves(Self, Array[String]) -> Unit
+pub fn FieldNode::count_leaves(Self) -> Int32
+pub fn FieldNode::name(Self) -> String
+
+#derive(Eq, @debug.Debug)
+pub(all) struct Span {
+  line : Int32
+  column : Int32
+  length : Int32
+}
+pub fn Span::at(Int32, Int32, length? : Int32) -> Self
+
+#derive(Eq, @debug.Debug)
+pub(all) enum StreamEvent {
+  StartObject
+  EndObject
+  StartArray(Int32)
+  EndArray
+  Key(String)
+  Primitive(@json.Json)
+}
+
+// Type aliases
+
+// Traits
