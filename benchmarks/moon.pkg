@@ -1,0 +1,5 @@
+import {
+  "waysyou/toon4",
+  "moonbitlang/core/bench",
+  "moonbitlang/core/test",
+} for "test"
