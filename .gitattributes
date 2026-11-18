@@ -1,0 +1,5 @@
+* text=auto eol=lf
+*.json text eol=lf
+*.toon text eol=lf
+*.mbt text eol=lf
+*.md text eol=lf
