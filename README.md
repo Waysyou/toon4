@@ -1,5 +1,10 @@
 # toon4 — TOON v4.4 Codec, Pinpoint Diagnostics & Token-Efficiency Advisor
 
+[![mooncakes.io](https://img.shields.io/badge/mooncakes.io-Waysyou%2Ftoon4-blue)](https://mooncakes.io/docs/Waysyou/toon4)
+[![CI](https://github.com/Waysyou/toon4/actions/workflows/ci.yml/badge.svg)](https://github.com/Waysyou/toon4/actions/workflows/ci.yml)
+[![TOON Spec](https://img.shields.io/badge/TOON%20v4.4-564%2F564%20fixtures-brightgreen)](conformance/README.md)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 Pure MoonBit implementation of **TOON (Token-Oriented Object Notation) v4.4**, built to:
 
 1. **Close TOON v4.4 compatibility gaps** in existing MoonBit tooling (including keyed tabular form `users[2:]{name,score}:`, nested field groups `geo{lat,lon}`, comment pre-pass `#`, canonical `[]` empty arrays, strict UTF-8 & number parsing, and exact §14.4 non-strict recoveries) — **564 / 564** official `toon-format/spec` fixtures passing.
@@ -128,7 +133,11 @@ Measured directly with `moon bench -p Waysyou/toon4/benchmarks` (`moonc v0.10.21
 
 [中文快速上手与三个可运行示例](examples/cli_walkthrough/README.md)
 
-### Library Usage (`moon.pkg`)
+### Library Usage (`moon add` & `moon.pkg`)
+```sh
+moon add Waysyou/toon4
+```
+
 ```text
 import {
   "Waysyou/toon4",
