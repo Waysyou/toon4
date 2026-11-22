@@ -12,6 +12,8 @@ pkgtype(kind: "executable")
 
 supported_targets = "native+wasm"
 
+warnings = "-unused_package"
+
 options(
   "allow-experimental-packages": true,
   targets: { "main.mbt": [ "native", "wasm" ] },
