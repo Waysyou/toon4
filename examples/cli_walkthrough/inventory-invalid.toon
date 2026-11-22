@@ -1,0 +1,4 @@
+items[3]{sku,warehouse,available_units}:
+  KB-01,SZ,3
+  MS-02,SZ
+  CB-03,GZ,2

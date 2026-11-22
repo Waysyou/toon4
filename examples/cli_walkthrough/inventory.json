@@ -1,0 +1,10 @@
+{
+  "items": [
+    {"sku":"KB-01","product_name":"Keyboard","warehouse":"SZ","available_units":3,"reorder_point":5},
+    {"sku":"MS-02","product_name":"Mouse","warehouse":"SZ","available_units":20,"reorder_point":5},
+    {"sku":"CB-03","product_name":"USB-C cable","warehouse":"GZ","available_units":2,"reorder_point":8},
+    {"sku":"HP-04","product_name":"Headphones","warehouse":"GZ","available_units":9,"reorder_point":6},
+    {"sku":"CH-05","product_name":"Charger","warehouse":"SZ","available_units":6,"reorder_point":6},
+    {"sku":"ST-06","product_name":"Laptop stand","warehouse":"BJ","available_units":8,"reorder_point":4}
+  ]
+}
