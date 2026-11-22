@@ -1,4 +1,4 @@
-name = "waysyou/toon4"
+name = "Waysyou/toon4"
 
 version = "0.1.0"
 

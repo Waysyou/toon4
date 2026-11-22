@@ -1,9 +1,9 @@
 // Generated using `moon info`, DON'T EDIT IT
-package "waysyou/toon4/encode"
+package "Waysyou/toon4/encode"
 
 import {
+  "Waysyou/toon4/types",
   "moonbitlang/core/json",
-  "waysyou/toon4/types",
 }
 
 // Values

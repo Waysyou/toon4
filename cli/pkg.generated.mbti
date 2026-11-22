@@ -1,9 +1,9 @@
 // Generated using `moon info`, DON'T EDIT IT
-package "waysyou/toon4/cli"
+package "Waysyou/toon4/cli"
 
 import {
+  "Waysyou/toon4/types",
   "moonbitlang/core/argparse",
-  "waysyou/toon4/types",
 }
 
 // Values

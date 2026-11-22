@@ -1,5 +1,5 @@
 import {
-  "waysyou/toon4",
+  "Waysyou/toon4",
   "moonbitlang/core/argparse",
   "moonbitlang/core/encoding/utf8",
   "moonbitlang/core/json",

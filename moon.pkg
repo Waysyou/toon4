@@ -1,8 +1,8 @@
 import {
-  "waysyou/toon4/types",
-  "waysyou/toon4/encode",
-  "waysyou/toon4/decode",
-  "waysyou/toon4/advisor",
+  "Waysyou/toon4/types",
+  "Waysyou/toon4/encode",
+  "Waysyou/toon4/decode",
+  "Waysyou/toon4/advisor",
 }
 
 import {

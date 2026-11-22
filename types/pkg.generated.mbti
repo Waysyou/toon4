@@ -1,5 +1,5 @@
 // Generated using `moon info`, DON'T EDIT IT
-package "waysyou/toon4/types"
+package "Waysyou/toon4/types"
 
 import {
   "moonbitlang/core/bigint",

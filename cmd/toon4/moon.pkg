@@ -1,6 +1,6 @@
 #cfg(any(target="native", target="wasm"))
 import {
-  "waysyou/toon4/cli",
+  "Waysyou/toon4/cli",
   "moonbitlang/core/encoding/utf8",
   "moonbitlang/core/env",
   "moonbitlang/core/async",

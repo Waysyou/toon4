@@ -12,7 +12,7 @@ Pure MoonBit implementation of **TOON (Token-Oriented Object Notation) v4.4**, b
 
 Auditing [`oliveagle/toon-mbit`](https://github.com/oliveagle/toon-mbit) against TOON Spec v4.4 and MoonBit `0.10.21` (`moon 0.1.20261117`) identified the following verified gaps:
 
-| Capability / Spec Clause | `oliveagle/toon-mbit` (audited) | `waysyou/toon4` |
+| Capability / Spec Clause | `oliveagle/toon-mbit` (audited) | `Waysyou/toon4` |
 | :--- | :--- | :--- |
 | Toolchain manifest (`moon.mod` / `moon.pkg`) | Uses legacy `moon.mod` + `moon.pkg.json` (rejected by `moon 0.1.20261117`) | Modern `moon.mod` + `moon.pkg` DSL; zero warnings (`--deny-warn`) across `wasm`, `wasm-gc`, `js`, `native` |
 | **TOON 4.4 §9.5 Keyed Tabular** (`users[2:]{name,score}:`) | Fails at `src/decoder.mbt:273-295, 360-369` (`:` inside `[2:]` treated as key-value colon / illegal symbol) | Full encode, decode, nested field groups, `[0:]`, delimiter support, and strict/non-strict rules |
@@ -88,7 +88,7 @@ Verdict [KEEP_COMPACT_JSON]: Keep compact JSON: TOON (comma) adds +19.1% estimat
 
 ## Performance Benchmarks (`moon bench`)
 
-Measured directly with `moon bench -p waysyou/toon4/benchmarks` (`moonc v0.10.21+06da1ed44`):
+Measured directly with `moon bench -p Waysyou/toon4/benchmarks` (`moonc v0.10.21+06da1ed44`):
 
 | Benchmark | `native` (mean ± σ) | `wasm` / `moonrun` (mean ± σ) |
 | :--- | :--- | :--- |
@@ -131,7 +131,7 @@ Measured directly with `moon bench -p waysyou/toon4/benchmarks` (`moonc v0.10.21
 ### Library Usage (`moon.pkg`)
 ```text
 import {
-  "waysyou/toon4",
+  "Waysyou/toon4",
 }
 ```
 
@@ -172,7 +172,7 @@ moon test --target native
 moon test --target wasm
 moon test --target wasm-gc
 moon test --target js
-moon bench -p waysyou/toon4/benchmarks --target native
+moon bench -p Waysyou/toon4/benchmarks --target native
 ```
 
 ---

@@ -1,6 +1,6 @@
 # Inventory Agent Example
 
-Demonstrates a realistic warehouse stock-alert AI agent workflow using `waysyou/toon4`:
+Demonstrates a realistic warehouse stock-alert AI agent workflow using `Waysyou/toon4`:
 
 1. Evaluates a 80-SKU inventory + 3-warehouse TOON 4.4 keyed metadata payload (`warehouses[3:]{city,leadDays,active}:`) with `@toon4.analyze` before calling an LLM.
 2. Encodes the payload into compact TOON v4.4 and previews the generated tabular + keyed-tabular headers.

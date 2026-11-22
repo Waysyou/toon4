@@ -11,6 +11,6 @@ version `4.4.0`, MIT License — see `conformance/fixtures/LICENSE`).
 Run the full conformance harness in MoonBit via:
 
 ```sh
-moon test -p waysyou/toon4/conformance --target native
-moon test -p waysyou/toon4/conformance --target wasm
+moon test -p Waysyou/toon4/conformance --target native
+moon test -p Waysyou/toon4/conformance --target wasm
 ```

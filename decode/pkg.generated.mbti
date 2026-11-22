@@ -1,11 +1,11 @@
 // Generated using `moon info`, DON'T EDIT IT
-package "waysyou/toon4/decode"
+package "Waysyou/toon4/decode"
 
 import {
+  "Waysyou/toon4/lex",
+  "Waysyou/toon4/types",
   "moonbitlang/core/bigint",
   "moonbitlang/core/json",
-  "waysyou/toon4/lex",
-  "waysyou/toon4/types",
 }
 
 // Values

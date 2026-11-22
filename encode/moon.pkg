@@ -1,6 +1,6 @@
 import {
-  "waysyou/toon4/types",
-  "waysyou/toon4/lex",
+  "Waysyou/toon4/types",
+  "Waysyou/toon4/lex",
 }
 
 import {
