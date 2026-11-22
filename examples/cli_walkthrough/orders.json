@@ -1,0 +1,24 @@
+{
+  "orders": [
+    {
+      "id": "A101",
+      "shipping": {"address": {"city": "Shenzhen"}, "tracking": {"carrier": "SF"}},
+      "lines": [{"sku": "KB-01", "qty": 1}]
+    },
+    {
+      "id": "A102",
+      "discount": {"code": "NOV", "applied": true},
+      "pickup": {"location": {"code": "GZ"}}
+    },
+    {
+      "id": "A103",
+      "refund": {"reason": {"code": "DAMAGED"}, "amount": 49},
+      "notes": ["Return requested"]
+    },
+    {
+      "id": "A104",
+      "status": "pending",
+      "customer": {"contact": {"region": "BJ"}}
+    }
+  ]
+}

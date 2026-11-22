@@ -126,6 +126,8 @@ Measured directly with `moon bench -p waysyou/toon4/benchmarks` (`moonc v0.10.21
 
 ## Quick Start
 
+[中文快速上手与三个可运行示例](examples/cli_walkthrough/README.md)
+
 ### Library Usage (`moon.pkg`)
 ```text
 import {
