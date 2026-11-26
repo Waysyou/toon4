@@ -174,6 +174,20 @@ moon run --target native cmd/toon4 -- check payload.toon
 moon run --target native cmd/toon4 -- decode payload.toon
 ```
 
+With the 0.2.0 CLI, run these examples from the repository root.
+
+```sh
+# Encode inventory.json with an automatically selected delimiter (also -d auto)
+moon run --target native cmd/toon4 -- encode --auto examples/cli_walkthrough/inventory.json
+
+# Compare formats for the JSON files in the walkthrough directory
+moon run --target native cmd/toon4 -- analyze examples/cli_walkthrough
+
+# Validate the TOON files in the directory. The sample inventory-invalid.toon
+# deliberately triggers E_WIDTH and a nonzero exit status.
+moon run --target native cmd/toon4 -- check examples/cli_walkthrough
+```
+
 ### Running All Tests & Benchmarks
 ```sh
 moon check --deny-warn --target all

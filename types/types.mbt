@@ -1,6 +1,6 @@
 ///|
-/// Delimiter character used in array headers, inline arrays, tabular rows, and
-/// keyed tabular entry rows per TOON §11.
+/// Separator for TOON array values and tabular cells (TOON §11).
+/// Comma is the default. Tab and pipe are declared in the array header.
 #derive(Eq, @debug.Debug)
 pub(all) enum Delimiter {
   Comma
@@ -19,7 +19,8 @@ pub fn Delimiter::to_char(self : Delimiter) -> Char {
 }
 
 ///|
-/// Parses a wire character into a `Delimiter`, returning `None` for any other char.
+/// Returns the delimiter represented by `ch`, or `None` for any character
+/// other than comma, tab, or pipe.
 pub fn Delimiter::from_char(ch : Char) -> Delimiter? {
   match ch {
     ',' => Some(Comma)
@@ -30,7 +31,8 @@ pub fn Delimiter::from_char(ch : Char) -> Delimiter? {
 }
 
 ///|
-/// Returns the bracket suffix emitted in TOON headers (empty for comma).
+/// Returns the text that follows the declared count or keyed marker inside
+/// the header brackets. The comma delimiter uses an empty suffix.
 pub fn Delimiter::header_suffix(self : Delimiter) -> String {
   match self {
     Comma => ""
@@ -40,7 +42,7 @@ pub fn Delimiter::header_suffix(self : Delimiter) -> String {
 }
 
 ///|
-/// Returns a human-readable name for CLI and advisor reporting.
+/// Returns the delimiter name `"comma"`, `"tab"`, or `"pipe"`.
 pub fn Delimiter::label(self : Delimiter) -> String {
   match self {
     Comma => "comma"
@@ -50,8 +52,9 @@ pub fn Delimiter::label(self : Delimiter) -> String {
 }
 
 ///|
-/// Recursive schema node inside `{...}` header field lists (TOON §6 & §9.3),
-/// representing either a scalar leaf column or a nested uniform object group.
+/// A node in a TOON tabular header field list (TOON §6 and §9.3).
+/// `Leaf` names a scalar column. `Group` names a nested object and lists its
+/// child fields in column order.
 #derive(Eq, @debug.Debug)
 pub(all) enum FieldNode {
   Leaf(String)
@@ -68,7 +71,7 @@ pub fn FieldNode::name(self : FieldNode) -> String {
 }
 
 ///|
-/// Counts the number of leaf columns expanded in depth-first pre-order.
+/// Returns the number of scalar columns represented by this node.
 pub fn FieldNode::count_leaves(self : FieldNode) -> Int32 {
   match self {
     Leaf(_) => 1
@@ -77,7 +80,7 @@ pub fn FieldNode::count_leaves(self : FieldNode) -> Int32 {
 }
 
 ///|
-/// Counts total leaf columns across a field-node slice.
+/// Returns the total number of scalar columns represented by `fields`.
 pub fn count_leaf_fields(fields : Array[FieldNode]) -> Int32 {
   let mut total = 0
   for field in fields {
@@ -87,7 +90,7 @@ pub fn count_leaf_fields(fields : Array[FieldNode]) -> Int32 {
 }
 
 ///|
-/// Appends leaf column names in depth-first pre-order.
+/// Appends this node's leaf column names to `out` in depth-first order.
 pub fn FieldNode::collect_leaves(self : FieldNode, out : Array[String]) -> Unit {
   match self {
     Leaf(name) => out.push(name)
@@ -99,9 +102,9 @@ pub fn FieldNode::collect_leaves(self : FieldNode, out : Array[String]) -> Unit 
 }
 
 ///|
-/// Detects duplicate field names within the same brace level, recursing into
-/// nested groups independently (so `{x,n{x}}` is valid while `{a,a}` and
-/// `{n{x,x}}` return the duplicated field name).
+/// Returns the first duplicate name found among siblings in `fields` or a
+/// nested group, or `None` if every group has unique names. Each brace level
+/// has its own scope, so `{x,n{x}}` is valid.
 pub fn find_duplicate_field(fields : Array[FieldNode]) -> String? {
   let seen : Map[String, Bool] = Map([])
   for field in fields {
@@ -123,7 +126,10 @@ pub fn find_duplicate_field(fields : Array[FieldNode]) -> String? {
 }
 
 ///|
-/// Parsed array or keyed-tabular header metadata (TOON §6 & §9.5).
+/// Parsed header metadata for an array or keyed table (TOON §6 and §9.5).
+/// `key` and `fields` hold the optional name and column schema. `length` is
+/// the declared item or entry count. `delimiter` selects the cell separator,
+/// and `keyed` marks the `[N:]` form.
 #derive(Eq, @debug.Debug)
 pub(all) struct ArrayHeader {
   key : String?
@@ -134,7 +140,10 @@ pub(all) struct ArrayHeader {
 }
 
 ///|
-/// Streaming decode event emitted by the recursive-descent TOON decoder.
+/// One event in a streamed TOON document. Object and array events mark
+/// container boundaries, `Key` names an object member, and `Primitive`
+/// carries a scalar JSON value. `StartArray` carries the declared length
+/// as a hint, capped at the maximum `Int32` value.
 #derive(Eq, @debug.Debug)
 pub(all) enum StreamEvent {
   StartObject
@@ -146,7 +155,8 @@ pub(all) enum StreamEvent {
 }
 
 ///|
-/// Options controlling TOON encoding (TOON §13.1).
+/// TOON encoding options (TOON §13.1). `indent_size` is the number of spaces
+/// per indentation level and `delimiter` selects the array and cell separator.
 #derive(Eq, @debug.Debug)
 pub(all) struct EncodeOptions {
   indent_size : Int32
@@ -154,13 +164,15 @@ pub(all) struct EncodeOptions {
 }
 
 ///|
-/// Default encoding options: `indent_size = 2`, `delimiter = Comma`.
+/// Returns encoding options with two spaces per level and a comma delimiter.
 pub fn EncodeOptions::default() -> EncodeOptions {
   { indent_size: 2, delimiter: Comma, }
 }
 
 ///|
-/// Creates encoding options with optional overrides.
+/// Returns encoding options with `indent_size` spaces per level and the specified
+/// `delimiter`. The defaults are two spaces and comma. Call `validate` to check
+/// the spacing before use.
 pub fn EncodeOptions::new(
   indent_size~ : Int32 = 2,
   delimiter~ : Delimiter = Comma,
@@ -169,7 +181,7 @@ pub fn EncodeOptions::new(
 }
 
 ///|
-/// Validates `EncodeOptions`, raising `EncodeError` if `indent_size < 1`.
+/// Checks that `indent_size` is at least one, raising `EncodeError` otherwise.
 pub fn EncodeOptions::validate(self : EncodeOptions) -> Unit raise EncodeError {
   if self.indent_size < 1 {
     raise EncodeError(
@@ -180,7 +192,9 @@ pub fn EncodeOptions::validate(self : EncodeOptions) -> Unit raise EncodeError {
 }
 
 ///|
-/// Options controlling TOON decoding (TOON §13.2).
+/// TOON decoding options (TOON §13.2). `indent_size` is the expected number
+/// of spaces per level. Setting `strict` to `false` enables the recoveries
+/// specified by TOON §14.4.
 #derive(Eq, @debug.Debug)
 pub(all) struct DecodeOptions {
   indent_size : Int32
@@ -188,13 +202,15 @@ pub(all) struct DecodeOptions {
 }
 
 ///|
-/// Default decoding options: `indent_size = 2`, `strict = true`.
+/// Returns decoding options with two spaces per level and strict validation.
 pub fn DecodeOptions::default() -> DecodeOptions {
   { indent_size: 2, strict: true, }
 }
 
 ///|
-/// Creates decoding options with optional overrides.
+/// Returns decoding options with the given `indent_size` and `strict` mode.
+/// The defaults are two spaces and strict validation. Call `validate` to
+/// check the spacing before use.
 pub fn DecodeOptions::new(
   indent_size~ : Int32 = 2,
   strict~ : Bool = true,
@@ -203,7 +219,8 @@ pub fn DecodeOptions::new(
 }
 
 ///|
-/// Validates `DecodeOptions`, raising `DecodeError` if `indent_size < 1`.
+/// Checks that `indent_size` is at least one. Otherwise raises a `DecodeError`
+/// with kind `InvalidOption`.
 pub fn DecodeOptions::validate(self : DecodeOptions) -> Unit raise DecodeError {
   if self.indent_size < 1 {
     raise DecodeError::new(
