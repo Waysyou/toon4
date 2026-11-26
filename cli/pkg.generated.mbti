@@ -13,11 +13,15 @@ pub fn parse_cli_args(Array[String]) -> CliOutcome
 
 pub fn run_action_on_bytes(CliAction, BytesView) -> ExecOutput
 
+pub fn run_batch_analyze(Array[(String, Bytes)], indent_size~ : Int32, as_json~ : Bool) -> ExecOutput
+
+pub fn run_batch_check(Array[(String, Bytes)], indent_size~ : Int32, strict~ : Bool) -> ExecOutput
+
 // Errors
 
 // Types and methods
 pub(all) enum CliAction {
-  Encode(input_path~ : String, output_path~ : String?, delimiter~ : @types.Delimiter, indent_size~ : Int32, stats~ : Bool)
+  Encode(input_path~ : String, output_path~ : String?, delimiter~ : @types.Delimiter, auto_delimiter~ : Bool, indent_size~ : Int32, stats~ : Bool)
   Decode(input_path~ : String, output_path~ : String?, indent_size~ : Int32, strict~ : Bool)
   Check(input_path~ : String, indent_size~ : Int32, strict~ : Bool)
   Analyze(input_path~ : String, output_path~ : String?, indent_size~ : Int32, as_json~ : Bool)

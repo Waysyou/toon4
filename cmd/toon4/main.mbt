@@ -18,6 +18,64 @@ fn action_input_path(action : @cli.CliAction) -> String {
 }
 
 ///|
+async fn is_input_directory(path : String) -> Bool {
+  if path == "-" {
+    return false
+  }
+  let kind = @fs.kind(path) catch { _ => return false }
+  kind is Directory
+}
+
+///|
+async fn read_batch_files(
+  root : String,
+  suffix : String,
+) -> Array[(String, Bytes)] {
+  let pending = [root]
+  let paths : Array[String] = []
+  while pending.pop() is Some(dir) {
+    let prefix = if dir.has_suffix("/") { dir } else { dir + "/" }
+    for name in @fs.readdir(dir) {
+      let path = prefix + name
+      match @fs.kind(path, follow_symlink=false) {
+        Directory => pending.push(path)
+        Regular if name.has_suffix(suffix) => paths.push(path)
+        _ => ()
+      }
+    }
+  }
+  paths.sort_by(String::lexical_compare)
+  let files : Array[(String, Bytes)] = []
+  for path in paths {
+    files.push((path, @fs.read_binary(path)))
+  }
+  files
+}
+
+///|
+async fn run_action_on_path(
+  action : @cli.CliAction,
+  path : String,
+) -> @cli.ExecOutput {
+  match action {
+    Check(indent_size~, strict~, ..) =>
+      if is_input_directory(path) {
+        let files = read_batch_files(path, ".toon")
+        return @cli.run_batch_check(files, indent_size~, strict~)
+      }
+    Analyze(output_path~, indent_size~, as_json~, ..) =>
+      if is_input_directory(path) {
+        let files = read_batch_files(path, ".json")
+        let result = @cli.run_batch_analyze(files, indent_size~, as_json~)
+        return { ..result, output_path, }
+      }
+    _ => ()
+  }
+  let bytes = read_input_bytes(path)
+  @cli.run_action_on_bytes(action, bytes[:])
+}
+
+///|
 async fn main {
   let raw_args = @env.args()
   let argv : Array[String] = if raw_args.length() > 1 {
@@ -41,13 +99,12 @@ async fn main {
     }
     Action(action) => {
       let path = action_input_path(action)
-      let bytes = read_input_bytes(path) catch {
+      let res = run_action_on_path(action, path) catch {
         err => {
           @stdio.stderr.write(@utf8.encode("error reading '\{path}': \{err}\n"))
           @env.exit(1)
         }
       }
-      let res = @cli.run_action_on_bytes(action, bytes[:])
       if !res.stderr.is_empty() {
         @stdio.stderr.write(@utf8.encode(res.stderr))
       }

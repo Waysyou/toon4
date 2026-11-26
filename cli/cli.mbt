@@ -4,6 +4,7 @@ pub(all) enum CliAction {
     input_path~ : String,
     output_path~ : String?,
     delimiter~ : @toon4.Delimiter,
+    auto_delimiter~ : Bool,
     indent_size~ : Int32,
     stats~ : Bool,
   )
@@ -69,6 +70,7 @@ pub fn build_command() -> @argparse.Command {
     "encode",
     about="Encode JSON input into TOON v4.4",
     flags=[
+      @argparse.FlagArg("auto", about="Choose the lowest-cost TOON delimiter"),
       @argparse.FlagArg(
         "stats",
         about="Print byte and estimated token savings vs compact JSON to stderr",
@@ -78,7 +80,7 @@ pub fn build_command() -> @argparse.Command {
       @argparse.OptionArg(
         "delimiter",
         short='d',
-        about="Array/tabular delimiter: comma, tab, or pipe (default: comma)",
+        about="Array/tabular delimiter: comma, tab, pipe, or auto (default: comma)",
         default_values=["comma"],
       ),
       ..io_opts(),
@@ -106,7 +108,7 @@ pub fn build_command() -> @argparse.Command {
   )
   let check_cmd = @argparse.Command(
     "check",
-    about="Validate TOON v4.4 document with pinpoint line/column diagnostics",
+    about="Validate TOON v4.4 documents with pinpoint line/column diagnostics",
     flags=strict_flags(),
     options=[
       @argparse.OptionArg(
@@ -118,7 +120,7 @@ pub fn build_command() -> @argparse.Command {
     positionals=[
       @argparse.PositionArg(
         "input",
-        about="Input TOON file path, or '-' for stdin (default: '-')",
+        about="Input TOON file, directory of .toon files, or '-' for stdin",
         default_values=["-"],
       ),
     ],
@@ -131,7 +133,7 @@ pub fn build_command() -> @argparse.Command {
     positionals=[
       @argparse.PositionArg(
         "input",
-        about="Input JSON file path, or '-' for stdin (default: '-')",
+        about="Input JSON file, directory of .json files, or '-' for stdin",
         default_values=["-"],
       ),
     ],
@@ -139,7 +141,7 @@ pub fn build_command() -> @argparse.Command {
   @argparse.Command(
     "toon4",
     about="TOON v4.4 codec, pinpoint diagnostics, and JSON vs TOON cost advisor",
-    version="0.1.0",
+    version="0.2.0",
     subcommand_required=true,
     arg_required_else_help=true,
     subcommands=[encode_cmd, decode_cmd, check_cmd, analyze_cmd],
@@ -210,18 +212,22 @@ pub fn parse_cli_args(argv : Array[String]) -> CliOutcome {
               }
               let delimiter = match parse_delimiter_name(raw_delim) {
                 Some(d) => d
+                None if raw_delim == "auto" => @toon4.Delimiter::Comma
                 None =>
                   return PrintAndExit(
-                    text="error: unsupported --delimiter '\{raw_delim}' (expected comma, tab, or pipe)",
+                    text="error: unsupported --delimiter '\{raw_delim}' (expected comma, tab, pipe, or auto)",
                     exit_code=2,
                   )
               }
+              let auto_delimiter = raw_delim == "auto" ||
+                sub_matches.flags.get("auto") is Some(true)
               let stats = sub_matches.flags.get("stats") is Some(true)
               Action(
                 Encode(
                   input_path~,
                   output_path~,
                   delimiter~,
+                  auto_delimiter~,
                   indent_size~,
                   stats~,
                 ),
@@ -247,6 +253,44 @@ pub fn parse_cli_args(argv : Array[String]) -> CliOutcome {
 }
 
 ///|
+fn parse_json_bytes(raw_bytes : BytesView) -> Result[Json, String] {
+  let json_text = @utf8.decode(raw_bytes) catch {
+    _ => return Err("error: input is not valid UTF-8")
+  }
+  let json_val = @json.parse(json_text, preserve_number_repr=true) catch {
+    err => return Err("JSON parse error: \{err}")
+  }
+  Ok(json_val)
+}
+
+///|
+fn analyze_json(
+  json_val : Json,
+  indent_size~ : Int32,
+) -> Result[@toon4.CostReport, String] {
+  let report = @toon4.analyze(json_val, indent_size~) catch {
+    err => return Err(@toon4.format_encode_error(err))
+  }
+  Ok(report)
+}
+
+///|
+fn analyze_bytes(
+  raw_bytes : BytesView,
+  indent_size~ : Int32,
+) -> Result[@toon4.CostReport, String] {
+  match parse_json_bytes(raw_bytes) {
+    Ok(json_val) => analyze_json(json_val, indent_size~)
+    Err(error) => Err(error)
+  }
+}
+
+///|
+fn execution_error(message : String) -> ExecOutput {
+  { stdout: "", stderr: "\{message}\n", exit_code: 1, output_path: None, }
+}
+
+///|
 /// Pure execution core operating on raw input bytes so tests can exercise
 /// encode/decode/check/analyze end-to-end without process I/O.
 pub fn run_action_on_bytes(
@@ -254,45 +298,36 @@ pub fn run_action_on_bytes(
   raw_bytes : BytesView,
 ) -> ExecOutput {
   match action {
-    Encode(output_path~, delimiter~, indent_size~, stats~, ..) => {
-      let json_text = @utf8.decode(raw_bytes) catch {
-        _ =>
-          return {
-            stdout: "",
-            stderr: "error: input is not valid UTF-8\n",
-            exit_code: 1,
-            output_path: None,
-          }
+    Encode(output_path~, delimiter~, auto_delimiter~, indent_size~, stats~, ..) => {
+      let json_val = match parse_json_bytes(raw_bytes) {
+        Ok(value) => value
+        Err(error) => return execution_error(error)
       }
-      let json_val = @json.parse(json_text, preserve_number_repr=true) catch {
-        err =>
-          return {
-            stdout: "",
-            stderr: "JSON parse error: \{err}\n",
-            exit_code: 1,
-            output_path: None,
-          }
+      let auto_report = if auto_delimiter {
+        match analyze_json(json_val, indent_size~) {
+          Ok(report) => Some(report)
+          Err(error) => return execution_error(error)
+        }
+      } else {
+        None
+      }
+      let delimiter = match auto_report {
+        Some(report) => report.best_toon.delimiter.unwrap_or(delimiter)
+        None => delimiter
       }
       let encoded = @toon4.encode(
         json_val,
         options=@toon4.EncodeOptions::new(indent_size~, delimiter~),
       ) catch {
-        err =>
-          return {
-            stdout: "",
-            stderr: "\{@toon4.format_encode_error(err)}\n",
-            exit_code: 1,
-            output_path: None,
-          }
+        err => return execution_error(@toon4.format_encode_error(err))
       }
       let stderr = if stats {
-        let report = @toon4.analyze(json_val, indent_size~) catch {
-          err =>
-            return {
-              stdout: "",
-              stderr: "\{@toon4.format_encode_error(err)}\n",
-              exit_code: 1,
-              output_path: None,
+        let report = match auto_report {
+          Some(report) => report
+          None =>
+            match analyze_json(json_val, indent_size~) {
+              Ok(report) => report
+              Err(error) => return execution_error(error)
             }
         }
         "\{report.render_report()}\n"
@@ -340,32 +375,9 @@ pub fn run_action_on_bytes(
       }
     }
     Analyze(output_path~, indent_size~, as_json~, ..) => {
-      let json_text = @utf8.decode(raw_bytes) catch {
-        _ =>
-          return {
-            stdout: "",
-            stderr: "error: input is not valid UTF-8\n",
-            exit_code: 1,
-            output_path: None,
-          }
-      }
-      let json_val = @json.parse(json_text, preserve_number_repr=true) catch {
-        err =>
-          return {
-            stdout: "",
-            stderr: "JSON parse error: \{err}\n",
-            exit_code: 1,
-            output_path: None,
-          }
-      }
-      let report = @toon4.analyze(json_val, indent_size~) catch {
-        err =>
-          return {
-            stdout: "",
-            stderr: "\{@toon4.format_encode_error(err)}\n",
-            exit_code: 1,
-            output_path: None,
-          }
+      let report = match analyze_bytes(raw_bytes, indent_size~) {
+        Ok(report) => report
+        Err(error) => return execution_error(error)
       }
       let text = if as_json {
         "\{report.to_json().stringify(indent=2)}\n"
@@ -375,4 +387,102 @@ pub fn run_action_on_bytes(
       { stdout: text, stderr: "", exit_code: 0, output_path, }
     }
   }
+}
+
+///|
+/// Validates the supplied files in order and reports each result.
+pub fn run_batch_check(
+  files : Array[(String, Bytes)],
+  indent_size~ : Int32,
+  strict~ : Bool,
+) -> ExecOutput {
+  let stdout = StringBuilder()
+  let mut passed = 0
+  for file in files {
+    let (path, bytes) = file
+    let result = run_action_on_bytes(
+      Check(input_path=path, indent_size~, strict~),
+      bytes[:],
+    )
+    if result.exit_code == 0 {
+      passed += 1
+      stdout.write_string("PASS \{path}\n")
+    } else {
+      stdout.write_string("FAIL \{path}: \{result.stderr}")
+    }
+  }
+  let total = files.length()
+  let failed = total - passed
+  if total == 0 {
+    stdout.write_string("No matching .toon files.\n")
+  }
+  stdout.write_string(
+    "Summary: \{passed} passed, \{failed} failed (total \{total} files)\n",
+  )
+  let exit_code = if total == 0 || failed > 0 { 1 } else { 0 }
+  { stdout: stdout.to_string(), stderr: "", exit_code, output_path: None, }
+}
+
+///|
+/// Analyzes the supplied files in order and returns a table or JSON report.
+pub fn run_batch_analyze(
+  files : Array[(String, Bytes)],
+  indent_size~ : Int32,
+  as_json~ : Bool,
+) -> ExecOutput {
+  let rows : Array[Json] = []
+  let table = StringBuilder()
+  if !as_json {
+    table.write_string(
+      "File | Compact JSON tokens | Best TOON tokens | Delta % | Recommendation\n",
+    )
+  }
+  let mut analyzed = 0
+  for file in files {
+    let (path, bytes) = file
+    match analyze_bytes(bytes[:], indent_size~) {
+      Ok(report) => {
+        analyzed += 1
+        if as_json {
+          rows.push({ "path": Json::string(path), "report": report.to_json() })
+        } else {
+          let compact = report.compact_json.estimated_tokens
+          let best = report.best_toon
+          let delta = (best.delta_vs_compact_pct * 10.0).round() / 10.0
+          table.write_string(
+            "\{path} | \{compact} | \{best.estimated_tokens} | \{delta}% | \{report.verdict.label()}\n",
+          )
+        }
+      }
+      Err(error) =>
+        if as_json {
+          rows.push({ "path": Json::string(path), "error": Json::string(error) })
+        } else {
+          table.write_string("\{path} | - | - | - | FAIL: \{error}\n")
+        }
+    }
+  }
+  let total = files.length()
+  let failed = total - analyzed
+  let stdout = if as_json {
+    let report : Json = {
+      "files": Json::array(rows),
+      "summary": {
+        "analyzed": Json::number(analyzed.to_double()),
+        "failed": Json::number(failed.to_double()),
+        "total": Json::number(total.to_double()),
+      },
+    }
+    "\{report.stringify(indent=2)}\n"
+  } else {
+    if total == 0 {
+      table.write_string("No matching .json files.\n")
+    }
+    table.write_string(
+      "Summary: \{analyzed} analyzed, \{failed} failed (total \{total} files)\n",
+    )
+    table.to_string()
+  }
+  let exit_code = if total == 0 || failed > 0 { 1 } else { 0 }
+  { stdout, stderr: "", exit_code, output_path: None, }
 }
