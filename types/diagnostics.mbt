@@ -1,5 +1,7 @@
 ///|
-/// 1-based source location span used in TOON diagnostics.
+/// Source location for a TOON diagnostic. `line` and `column` are 1-based,
+/// with line zero indicating that no line number is attached. `length`
+/// gives the width of the caret underline.
 #derive(Eq, @debug.Debug)
 pub(all) struct Span {
   line : Int32
@@ -8,8 +10,8 @@ pub(all) struct Span {
 }
 
 ///|
-/// Constructs a `Span` (clamping `line`, `column`, and `length` to `>= 1`
-/// unless `line == 0` indicates an unattached line).
+/// Returns a span with `line` clamped to zero or above, and `column` and
+/// `length` clamped to one or above. `length` defaults to one.
 pub fn Span::at(line : Int32, column : Int32, length~ : Int32 = 1) -> Span {
   let safe_line = if line < 0 { 0 } else { line }
   let safe_col = if column < 1 { 1 } else { column }
@@ -18,7 +20,8 @@ pub fn Span::at(line : Int32, column : Int32, length~ : Int32 = 1) -> Span {
 }
 
 ///|
-/// Machine-matchable error classification for TOON decoding failures.
+/// Classification of a TOON decoding failure. Use `code` for the stable
+/// identifier associated with each variant.
 #derive(Eq, @debug.Debug)
 pub(all) enum ErrorKind {
   InvalidUtf8
@@ -71,8 +74,8 @@ pub fn ErrorKind::code(self : ErrorKind) -> String {
 }
 
 ///|
-/// Structured TOON decode error carrying diagnostic kind, human message,
-/// 1-based line/column span, and optional offending source line.
+/// A TOON decoding failure with an `ErrorKind`, a descriptive message, a
+/// source span, and an optional source line for display.
 #derive(Eq, @debug.Debug)
 pub(all) suberror DecodeError {
   DecodeError(
@@ -84,7 +87,8 @@ pub(all) suberror DecodeError {
 }
 
 ///|
-/// Constructs a `DecodeError` with optional span and source line context.
+/// Returns a decode error with the given `kind` and `message`. The default
+/// `span` has no line number, and `source_line` defaults to `None`.
 pub fn DecodeError::new(
   kind~ : ErrorKind,
   message~ : String,
@@ -95,8 +99,9 @@ pub fn DecodeError::new(
 }
 
 ///|
-/// Returns a copy of this `DecodeError` bound to a specific 1-based line and
-/// optional source line, adjusting column by `col_offset` if desired.
+/// Returns a copy of the error on `line`, adding `col_offset` to its column
+/// and keeping the result at least one. A supplied `source_line` replaces
+/// the existing excerpt. `None` retains it.
 pub fn DecodeError::at_line(
   self : DecodeError,
   line : Int32,
@@ -125,8 +130,8 @@ pub fn DecodeError::at_line(
 }
 
 ///|
-/// Renders the error as a multi-line human-readable diagnostic with source line
-/// and `^` caret underline (visualizing `\t` as `→`).
+/// Returns the error code, message, and location when known. If the error
+/// carries a source line, includes a caret underline and displays tabs as `→`.
 pub fn DecodeError::format(self : DecodeError) -> String {
   match self {
     DecodeError(kind~, message~, span~, source_line~) => {
@@ -180,14 +185,15 @@ pub fn DecodeError::format(self : DecodeError) -> String {
 }
 
 ///|
-/// Structured TOON encode error (e.g. invalid options or unpaired UTF-16 surrogates).
+/// A TOON encoding failure with a descriptive message and an optional JSON
+/// path to the value that could not be encoded.
 #derive(Eq, @debug.Debug)
 pub(all) suberror EncodeError {
   EncodeError(message~ : String, path~ : String?)
 }
 
 ///|
-/// Formats an `EncodeError` for display.
+/// Returns a display string with the error message and its path, if present.
 pub fn EncodeError::format(self : EncodeError) -> String {
   match self {
     EncodeError(message~, path=None) => "EncodeError: \{message}"

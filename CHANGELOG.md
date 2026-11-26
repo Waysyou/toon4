@@ -1,6 +1,17 @@
 # Changelog
 
-## Unreleased
+## 0.2.0 (2026-11-26)
+
+### Added
+- Add `encode --auto` and `encode -d auto` to select the most efficient TOON delimiter automatically.
+- Allow `analyze` to compare JSON files in a directory and `check` to validate TOON files in a directory.
+
+### Changed
+- Align the module namespace with the `Waysyou/toon4` package published on [mooncakes.io](https://mooncakes.io/docs/Waysyou/toon4).
+
+### Documentation
+- Add a Chinese CLI walkthrough covering format selection, round-trip conversion, and pinpoint diagnostics.
+- Expand the public API reference for codec functions, options, diagnostics, and advisor reports.
 
 ### Fixed
 - Preserve decimal number text through JSON ⇄ TOON round trips and reject numeric overflow with a diagnostic.
