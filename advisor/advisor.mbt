@@ -1,5 +1,7 @@
 ///|
-/// High-level actionable recommendation from comparing TOON vs Compact JSON.
+/// Recommendation based on estimated token counts for TOON and compact JSON.
+/// `Marginal` indicates a small payload or savings that may not justify the
+/// overhead of adding TOON instructions to a prompt.
 #derive(Eq, @debug.Debug)
 pub(all) enum VerdictKind {
   RecommendToon
@@ -8,7 +10,8 @@ pub(all) enum VerdictKind {
 }
 
 ///|
-/// Returns a stable uppercase tag for CLI/JSON reporting.
+/// Returns the stable report tag `RECOMMEND_TOON`, `MARGINAL`, or
+/// `KEEP_COMPACT_JSON`.
 pub fn VerdictKind::label(self : VerdictKind) -> String {
   match self {
     RecommendToon => "RECOMMEND_TOON"
@@ -18,7 +21,10 @@ pub fn VerdictKind::label(self : VerdictKind) -> String {
 }
 
 ///|
-/// Per-format serialization and efficiency measurement.
+/// Serialized `text` and efficiency metrics for one format. `delimiter` is
+/// present for TOON, and `chars` counts Unicode scalars. The percentage deltas
+/// compare estimated token counts against compact and pretty JSON. Negative
+/// values indicate savings.
 #derive(Eq, @debug.Debug)
 pub(all) struct FormatStats {
   name : String
@@ -33,7 +39,10 @@ pub(all) struct FormatStats {
 }
 
 ///|
-/// Complete cost-efficiency and tabular diagnostic report for a JSON document.
+/// Comparison of five serializations of a JSON document. `best_toon` has the
+/// lowest estimated token count among the TOON variants, using UTF-8 byte
+/// count to break ties. `audit` records tabular coverage and fallback paths.
+/// `reason` explains the `verdict`.
 #derive(Eq, @debug.Debug)
 pub(all) struct CostReport {
   pretty_json : FormatStats
@@ -122,9 +131,10 @@ fn pick_better(a : FormatStats, b : FormatStats) -> FormatStats {
 }
 
 ///|
-/// Evaluates `value` across Pretty JSON, Compact JSON, and TOON (comma, tab,
-/// pipe), returning byte/token measurements, tabular coverage audit, and an
-/// explicit recommendation on whether TOON is worthwhile.
+/// Compares `value` as pretty JSON, compact JSON, and TOON with each supported
+/// delimiter. `indent_size` sets spaces per level for pretty JSON and TOON.
+/// Returns a `CostReport` with format metrics, coverage, and a recommendation.
+/// Raises `EncodeError` if TOON encoding fails.
 pub fn analyze(
   value : Json,
   indent_size~ : Int32 = 2,
@@ -273,8 +283,8 @@ fn pad_right(s : String, width : Int32) -> String {
 }
 
 ///|
-/// Renders a human-readable CLI / Markdown comparison table with ASCII bars,
-/// tabular coverage breakdown, fallback diagnostics, and final verdict.
+/// Returns a plain-text comparison with Unicode token bars, tabular coverage,
+/// up to five fallback paths, and the recommendation.
 pub fn CostReport::render_report(self : CostReport) -> String {
   let rows : Array[FormatStats] = [
     self.pretty_json,
@@ -349,8 +359,9 @@ fn format_stats_to_json(s : FormatStats) -> Json {
 }
 
 ///|
-/// Serializes `CostReport` as a JSON summary (omitting full rendered payload
-/// strings so report size stays compact for automation/CLI `--json`).
+/// Returns a JSON summary of format metrics, coverage, all fallback findings,
+/// and the recommendation. Serialized payload text is omitted, and percentage
+/// values are rounded to one decimal place.
 pub fn CostReport::to_json(self : CostReport) -> Json {
   let fb_json : Array[Json] = []
   for fb in self.audit.fallbacks {
