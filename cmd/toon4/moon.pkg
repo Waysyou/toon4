@@ -3,7 +3,6 @@ import {
   "Waysyou/toon4/cli",
   "moonbitlang/core/encoding/utf8",
   "moonbitlang/core/env",
-  "moonbitlang/core/async",
   "moonbitlang/core/async/fs",
   "moonbitlang/core/async/stdio",
 }
@@ -11,8 +10,6 @@ import {
 pkgtype(kind: "executable")
 
 supported_targets = "native+wasm"
-
-warnings = "-unused_package"
 
 options(
   "allow-experimental-packages": true,

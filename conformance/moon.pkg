@@ -12,8 +12,6 @@ import {
   "moonbitlang/core/async/fs",
 } for "test"
 
-warnings = "-unused_package"
-
 options(
   "allow-experimental-packages": true,
   targets: { "spec_conformance_test.mbt": [ "native", "wasm" ] },

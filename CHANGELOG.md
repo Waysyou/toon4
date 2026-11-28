@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.1 (2026-11-28)
+
+### Changed
+- Verify compatibility with `moonc v1.0.0-rc1` across all four backends. Remove the unused CLI `async` import and obsolete unused-package warning suppressions. Retain the import required by async conformance tests.
+- Enable manual CI runs, add an explicit `moon build --target all` step, and smoke-test the directory `analyze` and `encode --auto --stats` CLI paths introduced in 0.2.0.
+
 ## 0.2.0 (2026-11-26)
 
 ### Added

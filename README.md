@@ -35,6 +35,8 @@ Auditing [`oliveagle/toon-mbit`](https://github.com/oliveagle/toon-mbit) against
 
 ## Official Conformance & Verification
 
+Version 0.2.1 was verified with `moonc v1.0.0-rc1+3c0520448` (`moon 0.1.20261126`). Checks, builds, and tests passed across `wasm`, `wasm-gc`, `js`, and `native`, along with the native example and CLI smoke checks.
+
 Vendored all 23 official fixture files from [`toon-format/spec`](https://github.com/toon-format/spec) (`v4.4.0`, MIT License) under [`conformance/fixtures/`](conformance/fixtures):
 
 - **Encode fixtures**: **160 / 160** passing (9 files)
@@ -80,13 +82,14 @@ Verdict [RECOMMEND_TOON]: Recommend TOON (comma): -41.2% estimated tokens vs com
 Conversely, running `moon run --target native cmd/toon4 -- analyze conformance/fixtures/encode/objects-keyed.json` on semi-uniform nested fixture data accurately warns against converting:
 
 ```text
-Tabular coverage: 48.6% (tabular_items=18, fallback_items=19, array_blocks=0, keyed_blocks=9)
+Tabular coverage: 43.2% (tabular_items=16, fallback_items=21, array_blocks=0, keyed_blocks=8)
 Fallback paths:
   - tests (14 items): element [1] adds extra key 'note' absent in [0]; falls back to list form
   - tests[7].input.config (1 items): object has only 1 entry (< 2 minimum for TOON 4.4 keyed tabular '[N:]')
   - tests[11].input.items (2 items): element [1] is missing key 'config' present in [0]; falls back to list form
   - tests[12].input.items (2 items): contains non-object, empty-object, or nested-array elements; uses list form ('- ')
-Verdict [KEEP_COMPACT_JSON]: Keep compact JSON: TOON (comma) adds +19.1% estimated tokens vs compact JSON (tabular coverage 48.6%; 4 non-tabular path(s)).
+  - tests[12].input.items[0] (2 items): an anonymous list object must write its fields individually
+Verdict [KEEP_COMPACT_JSON]: Keep compact JSON: TOON (comma) adds +19.1% estimated tokens vs compact JSON (tabular coverage 43.2%; 5 non-tabular path(s)).
 ```
 
 ---
@@ -174,11 +177,11 @@ moon run --target native cmd/toon4 -- check payload.toon
 moon run --target native cmd/toon4 -- decode payload.toon
 ```
 
-With the 0.2.0 CLI, run these examples from the repository root.
+Run these examples from the repository root to try the CLI features introduced in 0.2.0.
 
 ```sh
 # Encode inventory.json with an automatically selected delimiter (also -d auto)
-moon run --target native cmd/toon4 -- encode --auto examples/cli_walkthrough/inventory.json
+moon run --target native cmd/toon4 -- encode --auto --stats examples/cli_walkthrough/inventory.json
 
 # Compare formats for the JSON files in the walkthrough directory
 moon run --target native cmd/toon4 -- analyze examples/cli_walkthrough
@@ -190,7 +193,9 @@ moon run --target native cmd/toon4 -- check examples/cli_walkthrough
 
 ### Running All Tests & Benchmarks
 ```sh
+moon fmt --check
 moon check --deny-warn --target all
+moon build --target all
 moon test --target native
 moon test --target wasm
 moon test --target wasm-gc
