@@ -4,6 +4,7 @@ on:
   push:
     branches: [ main ]
   pull_request:
+  workflow_dispatch:
 
 jobs:
   verify:
@@ -25,6 +26,9 @@ jobs:
           moon fmt --check
           moon check --deny-warn --target all
 
+      - name: Build across targets
+        run: moon build --target all
+
       - name: Run tests across wasm, wasm-gc, js, and native
         run: |
           moon test --target wasm
@@ -36,3 +40,5 @@ jobs:
         run: |
           moon run examples/inventory_agent --target native
           moon run --target native cmd/toon4 -- analyze conformance/fixtures/encode/objects-keyed.json
+          moon run --target native cmd/toon4 -- analyze examples/cli_walkthrough
+          moon run --target native cmd/toon4 -- encode --auto --stats examples/cli_walkthrough/inventory.json

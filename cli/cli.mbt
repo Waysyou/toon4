@@ -141,7 +141,7 @@ pub fn build_command() -> @argparse.Command {
   @argparse.Command(
     "toon4",
     about="TOON v4.4 codec, pinpoint diagnostics, and JSON vs TOON cost advisor",
-    version="0.2.0",
+    version="0.2.1",
     subcommand_required=true,
     arg_required_else_help=true,
     subcommands=[encode_cmd, decode_cmd, check_cmd, analyze_cmd],
